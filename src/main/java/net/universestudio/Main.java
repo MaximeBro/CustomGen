@@ -1,18 +1,26 @@
 package net.universestudio;
 
+import net.universestudio.data.DataLoader;
+import net.universestudio.data.DataSaver;
+import net.universestudio.generators.GenGeneration;
+import net.universestudio.generators.GenInstance;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Dispenser;
 import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.Panda;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Main extends JavaPlugin {
 
     public final DataSaver dataSaver;
+    public final DataLoader dataLoader;
     public final Map<UUID, BukkitTask> pluginTasks;
     public final ConsoleCommandSender console;
 
@@ -20,6 +28,7 @@ public class Main extends JavaPlugin {
 
     public Main() {
         this.dataSaver = new DataSaver(this);
+        this.dataLoader = new DataLoader(this);
         this.pluginTasks = new HashMap<>();
         this.console = this.getServer().getConsoleSender();
     }
@@ -28,6 +37,7 @@ public class Main extends JavaPlugin {
     public void onEnable() {
         super.onEnable();
         this.dataSaver.init();
+        this.dataLoader.init();
         this.retrieveGenerators();
 
         getServer().getPluginManager().registerEvents(new GenListener(this), this);
@@ -45,7 +55,7 @@ public class Main extends JavaPlugin {
 
     // Will transform back every registered dispenser as new generators
     private void retrieveGenerators() {
-        for(GenInstance instance : this.dataSaver.genInstances) {
+        for(GenInstance instance : this.dataSaver.getInstances()) {
             World world = instance.getWorld();
             if(this.getServer().getWorlds().contains(world)) {
                 Block block = world.getBlockAt(instance.getLocation());
@@ -70,6 +80,34 @@ public class Main extends JavaPlugin {
         }, 0L,40L);
 
         this.pluginTasks.put(id, task);
+    }
+
+    private ItemStack getMaterialFromGeneration(String name) {
+        GenGeneration generation = this.dataLoader.getGeneration(name);
+
+        if(generation != null) {
+            Map<Material, Double> generations = generation.getGeneration(). // Sorts map in natural order of values (percentages...)
+                    entrySet().stream().sorted(Map.Entry.comparingByValue())
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue,
+                            (e1, e2) -> e1,
+                            LinkedHashMap::new
+                    ));
+
+            Random random = new Random();
+            double percentage = random.nextDouble(100) + 1;
+
+            ItemStack randomItem = null;
+            for(Material key : generations.keySet()) {
+                if(generations.get(key) <= percentage) {
+                    randomItem = new ItemStack(key, 1);
+                }
+            }
+
+            if(randomItem != null) { return randomItem; }
+        }
+        return new ItemStack(Material.COBBLESTONE, 1);
     }
 
     private ItemStack getRandomMaterial() {

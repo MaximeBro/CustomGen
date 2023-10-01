@@ -1,4 +1,4 @@
-package net.universestudio;
+package net.universestudio.generators;
 
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -9,10 +9,11 @@ import java.util.UUID;
 
 public class GenInstance {
     private UUID id;
+    private String name;
     private UUID worldId;
     private Location location;
 
-    public GenInstance(Location location) {
+    public GenInstance(String name, Location location) {
         this.id = UUID.randomUUID();
         this.worldId = location.getWorld().getUID();
         this.location = location;
@@ -21,6 +22,7 @@ public class GenInstance {
     public GenInstance() {}
 
     public UUID getId() { return this.id; }
+    public String getName() { return this.name; }
     public Location getLocation() { return this.location; }
     public World getWorld() { return this.location.getWorld(); }
     public UUID getWorldId() { return this.getWorld().getUID(); }
@@ -29,9 +31,9 @@ public class GenInstance {
         return this.id + " | " + this.location + " | " + this.worldId;
     }
 
-    public void setId(String id) {
-        this.id = UUID.fromString(id);
-    }
+    public void setId(String id) { this.id = UUID.fromString(id); }
+
+    public void setName(String name) { this.name = name; }
 
     public void setWorldId(String id) {
         this.worldId = UUID.fromString(id);

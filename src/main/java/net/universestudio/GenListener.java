@@ -1,5 +1,6 @@
 package net.universestudio;
 
+import net.universestudio.generators.GenInstance;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -26,7 +27,7 @@ public class GenListener implements Listener {
             Dispenser genBlock = (Dispenser) e.getBlock().getState();
             genBlock.getPersistentDataContainer();
             if(genBlock.getCustomName() != null && genBlock.getCustomName().equals("§eCustom Gen")) {
-                GenInstance instance = new GenInstance(genBlock.getLocation());
+                GenInstance instance = new GenInstance("overworld_ores", genBlock.getLocation());
                 this.plugin.dataSaver.addLocation(instance);
                 this.plugin.registerGenerator(genBlock, instance.getId());
                 this.plugin.console.sendMessage(ChatColor.LIGHT_PURPLE + "" + instance.getLocation().getX() + ";" + instance.getLocation().getY() + ";" + instance.getLocation().getZ());
