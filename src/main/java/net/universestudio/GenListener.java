@@ -1,9 +1,7 @@
 package net.universestudio;
 
 import net.universestudio.generators.GenInstance;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.block.Dispenser;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -13,12 +11,10 @@ import org.bukkit.scheduler.BukkitTask;
 
 public class GenListener implements Listener {
 
-    private final Main plugin;
-    private final NamespacedKey dataKey;
+    private final CustomGen plugin;
 
-    public GenListener(Main javaPlugin) {
+    public GenListener(CustomGen javaPlugin) {
         this.plugin = javaPlugin;
-        this.dataKey = new NamespacedKey(this.plugin, "genId");
     }
 
     @EventHandler
@@ -26,11 +22,10 @@ public class GenListener implements Listener {
         if(e.getBlock().getType() == Material.DISPENSER) {
             Dispenser genBlock = (Dispenser) e.getBlock().getState();
             genBlock.getPersistentDataContainer();
-            if(genBlock.getCustomName() != null && genBlock.getCustomName().equals("§eCustom Gen")) {
-                GenInstance instance = new GenInstance("overworld_ores", genBlock.getLocation());
+            if(genBlock.getCustomName() != null && this.genExists(genBlock.getCustomName())) {
+                GenInstance instance = new GenInstance(genBlock.getCustomName(), genBlock.getLocation());
                 this.plugin.dataSaver.addLocation(instance);
                 this.plugin.registerGenerator(genBlock, instance.getId());
-                this.plugin.console.sendMessage(ChatColor.LIGHT_PURPLE + "" + instance.getLocation().getX() + ";" + instance.getLocation().getY() + ";" + instance.getLocation().getZ());
             }
         }
     }
@@ -39,7 +34,7 @@ public class GenListener implements Listener {
     public void onBlockBreak(BlockBreakEvent e) {
         if(e.getBlock().getType() == Material.DISPENSER) {
             Dispenser genBlock = (Dispenser) e.getBlock().getState();
-            if(genBlock.getCustomName() != null && genBlock.getCustomName().equals("§eCustom Gen")) {
+            if(genBlock.getCustomName() != null && this.genExists(genBlock.getCustomName())) {
                 GenInstance instance = this.plugin.dataSaver.getInstance(genBlock.getLocation());
                 this.plugin.dataSaver.removeLocation(instance);
                 BukkitTask task = this.plugin.pluginTasks.remove(instance.getId());
@@ -47,4 +42,6 @@ public class GenListener implements Listener {
             }
         }
     }
+
+    private boolean genExists(String name) { return this.plugin.dataLoader.contains(name); }
 }

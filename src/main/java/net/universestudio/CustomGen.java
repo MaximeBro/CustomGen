@@ -8,25 +8,23 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Dispenser;
 import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.entity.Item;
-import org.bukkit.entity.Panda;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class Main extends JavaPlugin {
+public class CustomGen extends JavaPlugin {
 
     public final DataSaver dataSaver;
     public final DataLoader dataLoader;
     public final Map<UUID, BukkitTask> pluginTasks;
     public final ConsoleCommandSender console;
-
     private int registeredGenerators;
 
-    public Main() {
+    public CustomGen() {
         this.dataSaver = new DataSaver(this);
         this.dataLoader = new DataLoader(this);
         this.pluginTasks = new HashMap<>();
@@ -43,7 +41,8 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new GenListener(this), this);
         getCommand("customgen").setExecutor(new GenCommand(this));
         console.sendMessage(ChatColor.GREEN + "[CustomGen] Plugin enabled !");
-        console.sendMessage(ChatColor.GREEN + "" + this.registeredGenerators + " custom generators loaded !");
+        console.sendMessage(ChatColor.GREEN + "" + this.registeredGenerators + " custom generator(s) loaded !");
+        console.sendMessage(ChatColor.GREEN + "" + this.dataLoader.getGenerations().size() + " custom generation(s) loaded !");
     }
 
     @Override
@@ -60,7 +59,7 @@ public class Main extends JavaPlugin {
             if(this.getServer().getWorlds().contains(world)) {
                 Block block = world.getBlockAt(instance.getLocation());
                 if(block.getType() == Material.DISPENSER && block.getState() instanceof Dispenser genBlock) {
-                    if(genBlock.getCustomName() != null && genBlock.getCustomName().equals("§eCustom Gen")) {
+                    if(genBlock.getCustomName() != null && genBlock.getCustomName().equals(instance.getName())) {
                         this.registerGenerator(genBlock, instance.getId());
                     }
                 } else {
@@ -75,7 +74,7 @@ public class Main extends JavaPlugin {
     public void registerGenerator(Dispenser genBlock, UUID id) {
         this.registeredGenerators++;
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(this, () -> {
-            genBlock.getInventory().addItem(this.getRandomMaterial());
+            genBlock.getInventory().addItem(this.getMaterialFromGeneration(genBlock.getCustomName()));
             genBlock.getWorld().playSound(genBlock.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5F, 1.0F);
         }, 0L,40L);
 
@@ -86,28 +85,30 @@ public class Main extends JavaPlugin {
         GenGeneration generation = this.dataLoader.getGeneration(name);
 
         if(generation != null) {
-            Map<Material, Double> generations = generation.getGeneration(). // Sorts map in natural order of values (percentages...)
-                    entrySet().stream().sorted(Map.Entry.comparingByValue())
-                    .collect(Collectors.toMap(
-                            Map.Entry::getKey,
-                            Map.Entry::getValue,
-                            (e1, e2) -> e1,
-                            LinkedHashMap::new
-                    ));
-
+            Map<Material, Double> generations = generation.getGeneration();
             Random random = new Random();
             double percentage = random.nextDouble(100) + 1;
 
             ItemStack randomItem = null;
-            for(Material key : generations.keySet()) {
-                if(generations.get(key) <= percentage) {
-                    randomItem = new ItemStack(key, 1);
+            for(Map.Entry<Material, Double> entry : generations.entrySet()) {
+                if(percentage <= entry.getValue()) {
+                    randomItem = new ItemStack(entry.getKey(), 1);
                 }
             }
-
             if(randomItem != null) { return randomItem; }
         }
-        return new ItemStack(Material.COBBLESTONE, 1);
+
+        return new ItemStack(Material.STONE, 1);
+    }
+
+    public Map<Material, Double> sortMap(Map<Material, Double> map, Comparator comparator) {
+
+        Stream<Map.Entry<Material, Double>> sorted = map.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(comparator));
+
+        map = sorted.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        return map;
     }
 
     private ItemStack getRandomMaterial() {

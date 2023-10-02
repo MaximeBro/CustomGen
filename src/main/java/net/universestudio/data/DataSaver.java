@@ -23,7 +23,7 @@ public class DataSaver {
     private final JavaPlugin plugin;
     public DataSaver(JavaPlugin plugin) {
         this.plugin = plugin;
-        this.path = this.plugin.getDataFolder().getPath() + "\\Generators";
+        this.path = this.plugin.getDataFolder().getPath() + "\\Data";
         this.gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(GenInstance.class, new GenInstanceAdapter()).create();
         this.genInstances = new ArrayList<GenInstance>();
 
@@ -36,17 +36,17 @@ public class DataSaver {
     public List<GenInstance> getInstances() { return this.genInstances; }
 
     public void init() {
-        this.loadConfig();
+        this.loadData();
     }
 
     public void addLocation(GenInstance location) {
         this.genInstances.add(location);
-        this.saveConfig();
+        this.saveData();
     }
 
     public void removeLocation(GenInstance location) {
         this.genInstances.remove(location);
-        this.saveConfig();
+        this.saveData();
     }
 
     public GenInstance getInstance(Location location) {
@@ -59,7 +59,7 @@ public class DataSaver {
         return null;
     }
 
-    private void loadConfig() {
+    private void loadData() {
         try {
             File dataFile = new File(this.path + "\\generators_location.json");
             if(dataFile.exists()) {
@@ -70,12 +70,12 @@ public class DataSaver {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    private void saveConfig() {
+    private void saveData() {
         try {
             TypeToken<ArrayList<GenInstance>> typeToken = new TypeToken<>(){};
             File dataFile = new File(this.path + "\\generators_location.json");
-            Writer writer = new FileWriter(dataFile, false);
             dataFile.createNewFile();
+            Writer writer = new FileWriter(dataFile, false);
             String data = gson.toJson(this.genInstances.toArray());
             writer.write(data);
             writer.flush();

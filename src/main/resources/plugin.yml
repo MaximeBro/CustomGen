@@ -2,7 +2,7 @@ name: CustomGen
 version: 1.0
 api-version: 1.19
 author: Phil McFly
-main: net.universestudio.Main
+main: net.universestudio.CustomGen
 commands:
   customgen:
     description: Base command

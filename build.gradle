@@ -22,7 +22,7 @@ setLibsDirName('C:\\Users\\Maxime\\Desktop\\DevServer\\plugins')
 jar {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     manifest {
-        attributes "Main-Class": "net.universestudio.Main"
+        attributes "Main-Class": "net.universestudio.CustomGen"
     }
 
     from {

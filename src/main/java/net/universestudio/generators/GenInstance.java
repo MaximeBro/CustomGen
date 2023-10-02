@@ -15,11 +15,12 @@ public class GenInstance {
 
     public GenInstance(String name, Location location) {
         this.id = UUID.randomUUID();
+        this.name = name;
         this.worldId = location.getWorld().getUID();
         this.location = location;
     }
 
-    public GenInstance() {}
+    public GenInstance() { }
 
     public UUID getId() { return this.id; }
     public String getName() { return this.name; }
