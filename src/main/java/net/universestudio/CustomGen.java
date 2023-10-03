@@ -23,17 +23,18 @@ public class CustomGen extends JavaPlugin {
     public final Map<UUID, BukkitTask> pluginTasks;
     public final ConsoleCommandSender console;
     private int registeredGenerators;
+    private final Map<GenInstance, Location> corruptedData;
 
     public CustomGen() {
         this.dataSaver = new DataSaver(this);
         this.dataLoader = new DataLoader(this);
         this.pluginTasks = new HashMap<>();
         this.console = this.getServer().getConsoleSender();
+        this.corruptedData = new HashMap<>();
     }
 
     @Override
     public void onEnable() {
-        super.onEnable();
         this.dataSaver.init();
         this.dataLoader.init();
         this.retrieveGenerators();
@@ -41,14 +42,13 @@ public class CustomGen extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new GenListener(this), this);
         getCommand("customgen").setExecutor(new GenCommand(this));
         console.sendMessage(ChatColor.GREEN + "[CustomGen] Plugin enabled !");
-        console.sendMessage(ChatColor.GREEN + "" + this.registeredGenerators + " custom generator(s) loaded !");
         console.sendMessage(ChatColor.GREEN + "" + this.dataLoader.getGenerations().size() + " custom generation(s) loaded !");
+        console.sendMessage(ChatColor.GREEN + "" + this.registeredGenerators + " custom task(s) started !");
     }
 
     @Override
     public void onDisable() {
-        super.onDisable();
-        console.sendMessage(ChatColor.BLUE + "" + this.registeredGenerators + " generators tasks disabled !");
+        console.sendMessage(ChatColor.BLUE + "" + this.registeredGenerators + " generators tasks stopped !");
         console.sendMessage(ChatColor.BLUE + "[CustomGen] Plugin disabled !");
     }
 
@@ -61,27 +61,31 @@ public class CustomGen extends JavaPlugin {
                 if(block.getType() == Material.DISPENSER && block.getState() instanceof Dispenser genBlock) {
                     if(genBlock.getCustomName() != null && genBlock.getCustomName().equals(instance.getName())) {
                         this.registerGenerator(genBlock, instance.getId());
-                    }
-                } else {
-                    console.sendMessage( ChatColor.RED + "[CustomGen] - FAIL : block " + block);
-                    console.sendMessage( ChatColor.RED + "[CustomGen] - FAIL : instance " + block.getLocation());
-                    this.dataSaver.removeLocation(instance);
-                }
-            }
+                    }else
+                        this.corruptedData.put(instance, block.getLocation());
+                } else
+                    this.corruptedData.put(instance, block.getLocation());
+            } else
+                this.corruptedData.put(instance, instance.getLocation());
         }
+
+        for(Map.Entry<GenInstance, Location> entry : this.corruptedData.entrySet()) {
+            this.removeGen(entry.getKey(), entry.getValue());
+        }
+        this.corruptedData.clear();
     }
 
     public void registerGenerator(Dispenser genBlock, UUID id) {
         this.registeredGenerators++;
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(this, () -> {
-            genBlock.getInventory().addItem(this.getMaterialFromGeneration(genBlock.getCustomName()));
+            genBlock.getInventory().addItem(this.getRandomMaterial(genBlock.getCustomName()));
             genBlock.getWorld().playSound(genBlock.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5F, 1.0F);
         }, 0L,40L);
 
         this.pluginTasks.put(id, task);
     }
 
-    private ItemStack getMaterialFromGeneration(String name) {
+    private ItemStack getRandomMaterial(String name) {
         GenGeneration generation = this.dataLoader.getGeneration(name);
 
         if(generation != null) {
@@ -111,28 +115,8 @@ public class CustomGen extends JavaPlugin {
         return map;
     }
 
-    private ItemStack getRandomMaterial() {
-        Random random = new Random();
-        double percentage = random.nextDouble(100) + 1;
-
-        if(percentage <= 0.1) {
-            return new ItemStack(Material.ANCIENT_DEBRIS, 1);
-        } else if(percentage <= 0.5) {
-            return new ItemStack(Material.DIAMOND_ORE, 1);
-        } else if(percentage <= 2) {
-            return new ItemStack(Material.GOLD_ORE, 1);
-        } else if(percentage <= 3.5) {
-            return new ItemStack(Material.LAPIS_ORE, 1);
-        } else if(percentage <= 5) {
-            return new ItemStack(Material.REDSTONE_ORE, 1);
-        } else if(percentage <= 10) {
-            return new ItemStack(Material.IRON_ORE, 1);
-        } else if(percentage <= 20) {
-            return new ItemStack(Material.COAL_ORE, 1);
-        } else if(percentage <= 58.9) {
-            return new ItemStack(Material.STONE, 1);
-        }
-
-        return new ItemStack(Material.COBBLESTONE, 1);
+    private void removeGen(GenInstance instance, Location location) {
+        console.sendMessage( ChatColor.RED + "[CustomGen] block " + location + " corrupted or got the wrong data. Pending deletion...");
+        this.dataSaver.removeLocation(instance);
     }
 }

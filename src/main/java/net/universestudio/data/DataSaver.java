@@ -45,8 +45,10 @@ public class DataSaver {
     }
 
     public void removeLocation(GenInstance location) {
-        this.genInstances.remove(location);
-        this.saveData();
+        if(this.genInstances.contains((location))) {
+            this.genInstances.remove(location);
+            this.saveData();
+        }
     }
 
     public GenInstance getInstance(Location location) {

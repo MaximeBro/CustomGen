@@ -45,7 +45,7 @@ public class GenCommand implements CommandExecutor {
 
                     ItemStack gen = new ItemStack(Material.DISPENSER, nb);
                     ItemMeta meta = gen.getItemMeta();
-                    meta.setDisplayName(name);
+                    meta.setDisplayName("§e" + name);
                     gen.setItemMeta(meta);
 
                     player.getInventory().addItem(gen);

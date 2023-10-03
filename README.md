@@ -1,7 +1,8 @@
 # CustomGen
 CustomGen is a plugin which adds a custom ores generator represented by a dispenser.
-The generator can be obtained with its crafting recipe and will produce the ores in its inventory.
-You can create different generators with config files - see [Config tutorial](https://www.youtube.com) - for more information.
+The generator can be obtained with its crafting recipe and will produce the ores in its inventory.<br/>
+You can create different generators with config files - see [Config Format](https://pastebin.com/tucACTZ4) - for more information.
+Remember that the sum of your values must be equal to 100 !<br/>
 Your generators data is saved under json files in the config directory and is restored every time you restart your server.
 
 ## Commands
@@ -49,7 +50,7 @@ You only need one permission to use all the plugin's commands : `customgen.use`
 # Crafting Recipe
 Coming soon...
 
-## Download & Releases
+## Downloads & Releases
 Coming soon...
 
 # Disclaimer
