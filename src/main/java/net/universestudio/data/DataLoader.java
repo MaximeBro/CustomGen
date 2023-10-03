@@ -1,21 +1,17 @@
 package net.universestudio.data;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.TypeAdapter;
+import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import net.universestudio.CustomGen;
 import net.universestudio.generators.GenGeneration;
+import org.bukkit.Material;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class DataLoader {
 
@@ -90,7 +86,14 @@ public class DataLoader {
             writer.name("name");
             writer.value(value.getName());
             writer.name("generation");
-            writer.value(value.deserialize());
+            writer.beginArray();
+            for(Map.Entry<Material, Double> entry : value.getGeneration().entrySet()) {
+                writer.beginObject();
+                writer.name(entry.getKey().name());
+                writer.value(entry.getValue().doubleValue());
+                writer.endObject();
+            }
+            writer.endArray();
             writer.endObject();
         }
 
@@ -113,7 +116,17 @@ public class DataLoader {
 
                 if(fieldName.equals("generation")) {
                     token = reader.peek();
-                    generation.setGeneration(generation.serialize(reader.nextString()));
+
+                    reader.beginArray();
+                    Map<Material, Double> map = new HashMap<>();
+                    while(reader.hasNext()) {
+                        reader.beginObject();
+                        map.put(Enum.valueOf(Material.class, reader.nextName().trim()), Double.parseDouble(reader.nextString().trim()));
+                        reader.endObject();
+                    }
+                    reader.endArray();
+
+                    generation.setGeneration(map);
                 }
             }
 

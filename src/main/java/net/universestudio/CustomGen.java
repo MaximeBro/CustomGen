@@ -12,6 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -59,7 +60,7 @@ public class CustomGen extends JavaPlugin {
             if(this.getServer().getWorlds().contains(world)) {
                 Block block = world.getBlockAt(instance.getLocation());
                 if(block.getType() == Material.DISPENSER && block.getState() instanceof Dispenser genBlock) {
-                    if(genBlock.getCustomName() != null && genBlock.getCustomName().equals(instance.getName())) {
+                    if(genBlock.getCustomName() != null && genBlock.getCustomName().replace("§e", "").equals(instance.getName())) {
                         this.registerGenerator(genBlock, instance.getId());
                     }else
                         this.corruptedData.put(instance, block.getLocation());
@@ -78,7 +79,7 @@ public class CustomGen extends JavaPlugin {
     public void registerGenerator(Dispenser genBlock, UUID id) {
         this.registeredGenerators++;
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(this, () -> {
-            genBlock.getInventory().addItem(this.getRandomMaterial(genBlock.getCustomName()));
+            genBlock.getInventory().addItem(this.getRandomMaterial(genBlock.getCustomName().replace("§e", "")));
             genBlock.getWorld().playSound(genBlock.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5F, 1.0F);
         }, 0L,40L);
 

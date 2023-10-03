@@ -22,28 +22,6 @@ public class GenGeneration {
 
     public GenGeneration() {}
 
-    public String deserialize() {
-        String val = "";
-        for(Material key : this.generation.keySet()) {
-            val += key.name() + "=" + this.generation.get(key).doubleValue() + ";";
-        }
-
-        return val;
-    }
-
-    public Map<Material, Double> serialize(String serialized) {
-        Map<Material, Double> map = new HashMap<Material, Double>();
-        String[] entrySet = serialized.split(";");
-        for (String entry : entrySet) {
-            String[] values = entry.split("=");
-            Material material = Enum.valueOf(Material.class, values[0].trim());
-            Double percentage = Double.parseDouble(values[1].trim());
-            map.put(material, percentage);
-        }
-
-        return map;
-    }
-
     // Getters & Setters
     public String getName() { return this.name; }
     public Map<Material, Double> getGeneration() { return this.generation; }
