@@ -22,8 +22,8 @@ public class GenListener implements Listener {
         if(e.getBlock().getType() == Material.DISPENSER) {
             Dispenser genBlock = (Dispenser) e.getBlock().getState();
             genBlock.getPersistentDataContainer();
-            if(genBlock.getCustomName() != null && this.genExists(genBlock.getCustomName())) {
-                GenInstance instance = new GenInstance(genBlock.getCustomName(), genBlock.getLocation());
+            if(genBlock.getCustomName() != null && this.genExists(genBlock.getCustomName().replace("§e", ""))) {
+                GenInstance instance = new GenInstance(genBlock.getCustomName().replace("§e", ""), genBlock.getLocation());
                 this.plugin.dataSaver.addLocation(instance);
                 this.plugin.registerGenerator(genBlock, instance.getId());
             }
@@ -34,7 +34,7 @@ public class GenListener implements Listener {
     public void onBlockBreak(BlockBreakEvent e) {
         if(e.getBlock().getType() == Material.DISPENSER) {
             Dispenser genBlock = (Dispenser) e.getBlock().getState();
-            if(genBlock.getCustomName() != null && this.genExists(genBlock.getCustomName())) {
+            if(genBlock.getCustomName() != null && this.genExists(genBlock.getCustomName().replace("§e", ""))) {
                 GenInstance instance = this.plugin.dataSaver.getInstance(genBlock.getLocation());
                 this.plugin.dataSaver.removeLocation(instance);
                 BukkitTask task = this.plugin.pluginTasks.remove(instance.getId());
