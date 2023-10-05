@@ -11,3 +11,19 @@ commands:
   customgen give:
     description: Gives you a custom gen
     permission: customgen.give
+
+  customgen tasks:
+    description: Gets the count of running generators
+    permission: customgen.tasks
+
+  customgen list:
+    description: Gets the loaded generations
+    permission: customgen.list
+
+  customgen version:
+    description: Gets the plugin build version
+    permission: customgen.use
+
+  customgen generation:
+    description: Gets the generation of the specified name
+    permission: customgen.generation

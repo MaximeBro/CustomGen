@@ -56,7 +56,7 @@ public class DataLoader {
 
     private void sortGenerations() {
         for(GenGeneration generation : this.genGenerations) {
-            generation.setGeneration(((CustomGen)this.plugin).sortMap(generation.getGeneration(), Comparator.reverseOrder()));
+            generation.setGeneration(((CustomGen)this.plugin).sortMap(generation.getGeneration()));
         }
     }
 

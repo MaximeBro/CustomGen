@@ -1,5 +1,7 @@
 package net.universestudio;
 
+import net.universestudio.commands.CommandManager;
+import net.universestudio.commands.GenCommand;
 import net.universestudio.data.DataLoader;
 import net.universestudio.data.DataSaver;
 import net.universestudio.generators.GenGeneration;
@@ -9,10 +11,11 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Dispenser;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,9 +42,11 @@ public class CustomGen extends JavaPlugin {
         this.dataSaver.init();
         this.dataLoader.init();
         this.retrieveGenerators();
+        this.registerRecipe();
+        CommandManager.registerCommands(this);
 
         getServer().getPluginManager().registerEvents(new GenListener(this), this);
-        getCommand("customgen").setExecutor(new GenCommand(this));
+
         console.sendMessage(ChatColor.GREEN + "[CustomGen] Plugin enabled !");
         console.sendMessage(ChatColor.GREEN + "" + this.dataLoader.getGenerations().size() + " custom generation(s) loaded !");
         console.sendMessage(ChatColor.GREEN + "" + this.registeredGenerators + " custom task(s) started !");
@@ -49,7 +54,7 @@ public class CustomGen extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        console.sendMessage(ChatColor.BLUE + "" + this.registeredGenerators + " generators tasks stopped !");
+        console.sendMessage(ChatColor.BLUE + "" + this.pluginTasks.size() + " generators tasks stopped !");
         console.sendMessage(ChatColor.BLUE + "[CustomGen] Plugin disabled !");
     }
 
@@ -62,18 +67,32 @@ public class CustomGen extends JavaPlugin {
                 if(block.getType() == Material.DISPENSER && block.getState() instanceof Dispenser genBlock) {
                     if(genBlock.getCustomName() != null && genBlock.getCustomName().replace("§e", "").equals(instance.getName())) {
                         this.registerGenerator(genBlock, instance.getId());
-                    }else
-                        this.corruptedData.put(instance, block.getLocation());
-                } else
-                    this.corruptedData.put(instance, block.getLocation());
-            } else
-                this.corruptedData.put(instance, instance.getLocation());
+                        continue;
+                    }
+                }
+            }
+            this.corruptedData.put(instance, instance.getLocation());
         }
 
         for(Map.Entry<GenInstance, Location> entry : this.corruptedData.entrySet()) {
             this.removeGen(entry.getKey(), entry.getValue());
         }
         this.corruptedData.clear();
+    }
+
+    public void registerRecipe() {
+        ItemStack generator = new ItemStack(Material.DISPENSER);
+        ItemMeta meta = generator.getItemMeta();
+        meta.setDisplayName(ChatColor.YELLOW + "default");
+        generator.setItemMeta(meta);
+        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "cg_generator"), generator);
+        recipe.shape("%i%", "i*i", "%i%");
+
+        recipe.setIngredient('%', Material.SMOOTH_STONE);
+        recipe.setIngredient('i', Material.IRON_INGOT);
+        recipe.setIngredient('*', Material.DISPENSER);
+
+        getServer().addRecipe(recipe);
     }
 
     public void registerGenerator(Dispenser genBlock, UUID id) {
@@ -92,7 +111,7 @@ public class CustomGen extends JavaPlugin {
         if(generation != null) {
             Map<Material, Double> generations = generation.getGeneration();
             Random random = new Random();
-            double percentage = random.nextDouble(100) + 1;
+            double percentage = random.nextDouble() * 100;
 
             ItemStack randomItem = null;
             for(Map.Entry<Material, Double> entry : generations.entrySet()) {
@@ -106,14 +125,21 @@ public class CustomGen extends JavaPlugin {
         return new ItemStack(Material.STONE, 1);
     }
 
-    public Map<Material, Double> sortMap(Map<Material, Double> map, Comparator comparator) {
+    public <K, V> Map<K, V> sortMap(Map<K, V> map, Comparator comparator) {
 
-        Stream<Map.Entry<Material, Double>> sorted = map.entrySet().stream()
+        Stream<Map.Entry<K, V>> sorted = map.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue(comparator));
 
-        map = sorted.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<K, V> sortedMap = sorted.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        return map;
+        return sortedMap;
+    }
+
+    public static <K, V extends Comparable<? super V>> Map<K, V> sortMap(Map<K, V> map) {
+        return map.entrySet()
+                .stream()
+                .sorted(Map.Entry.<K, V>comparingByValue().reversed())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
     }
 
     private void removeGen(GenInstance instance, Location location) {
