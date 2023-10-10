@@ -1,6 +1,6 @@
 package net.universestudio;
 
-import net.universestudio.generators.GenInstance;
+import net.universestudio.models.GenInstance;
 import org.bukkit.Material;
 import org.bukkit.block.Dispenser;
 import org.bukkit.event.EventHandler;
@@ -24,7 +24,7 @@ public class GenListener implements Listener {
             genBlock.getPersistentDataContainer();
             if(genBlock.getCustomName() != null && this.genExists(genBlock.getCustomName().replace("§e", ""))) {
                 GenInstance instance = new GenInstance(genBlock.getCustomName().replace("§e", ""), genBlock.getLocation());
-                this.plugin.dataSaver.addLocation(instance);
+                this.plugin.instanceManager.addLocation(instance);
                 this.plugin.registerGenerator(genBlock, instance.getId());
             }
         }
@@ -35,13 +35,13 @@ public class GenListener implements Listener {
         if(e.getBlock().getType() == Material.DISPENSER) {
             Dispenser genBlock = (Dispenser) e.getBlock().getState();
             if(genBlock.getCustomName() != null && this.genExists(genBlock.getCustomName().replace("§e", ""))) {
-                GenInstance instance = this.plugin.dataSaver.getInstance(genBlock.getLocation());
-                this.plugin.dataSaver.removeLocation(instance);
+                GenInstance instance = this.plugin.instanceManager.getInstance(genBlock.getLocation());
+                this.plugin.instanceManager.removeLocation(instance);
                 BukkitTask task = this.plugin.pluginTasks.remove(instance.getId());
                 if(task != null) task.cancel();
             }
         }
     }
 
-    private boolean genExists(String name) { return this.plugin.dataLoader.contains(name); }
+    private boolean genExists(String name) { return this.plugin.generationManager.contains(name); }
 }

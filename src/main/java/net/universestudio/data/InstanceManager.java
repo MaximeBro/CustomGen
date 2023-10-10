@@ -7,7 +7,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
-import net.universestudio.generators.GenInstance;
+import net.universestudio.models.GenInstance;
 import org.bukkit.Location;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -16,38 +16,37 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class DataSaver {
+public class InstanceManager {
     private final String path;
     private List<GenInstance> genInstances;
     private final Gson gson;
     private final JavaPlugin plugin;
-    public DataSaver(JavaPlugin plugin) {
+    public InstanceManager(JavaPlugin plugin) {
         this.plugin = plugin;
-        this.path = this.plugin.getDataFolder().getPath() + "\\Data";
+        this.path = this.plugin.getDataFolder().getPath() + "\\Saved";
         this.gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(GenInstance.class, new GenInstanceAdapter()).create();
         this.genInstances = new ArrayList<GenInstance>();
 
         File dataDir = new File(this.path);
-        if(!dataDir.exists()) {
-            try { dataDir.mkdir(); } catch(Exception e) { e.printStackTrace(); }
-        }
+        if(!dataDir.exists())
+            dataDir.mkdir();
     }
 
     public List<GenInstance> getInstances() { return this.genInstances; }
 
     public void init() {
-        this.loadData();
+        this.loadInstances();
     }
 
     public void addLocation(GenInstance location) {
         this.genInstances.add(location);
-        this.saveData();
+        this.saveInstances();
     }
 
     public void removeLocation(GenInstance location) {
         if(this.genInstances.contains((location))) {
             this.genInstances.remove(location);
-            this.saveData();
+            this.saveInstances();
         }
     }
 
@@ -61,9 +60,9 @@ public class DataSaver {
         return null;
     }
 
-    private void loadData() {
+    private void loadInstances() {
         try {
-            File dataFile = new File(this.path + "\\generators_location.json");
+            File dataFile = new File(this.path + "\\location.json");
             if(dataFile.exists()) {
                 Reader reader = new FileReader(dataFile);
                 this.genInstances = new ArrayList<GenInstance>(Arrays.asList(gson.fromJson(reader, GenInstance[].class)));
@@ -72,10 +71,10 @@ public class DataSaver {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    private void saveData() {
+    private void saveInstances() {
         try {
             TypeToken<ArrayList<GenInstance>> typeToken = new TypeToken<>(){};
-            File dataFile = new File(this.path + "\\generators_location.json");
+            File dataFile = new File(this.path + "\\location.json");
             dataFile.createNewFile();
             Writer writer = new FileWriter(dataFile, false);
             String data = gson.toJson(this.genInstances.toArray());

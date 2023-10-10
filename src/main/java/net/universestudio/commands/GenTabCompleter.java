@@ -1,11 +1,10 @@
 package net.universestudio.commands;
 
 import net.universestudio.CustomGen;
-import net.universestudio.generators.GenGeneration;
+import net.universestudio.models.GenGeneration;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +34,7 @@ public class GenTabCompleter implements TabCompleter {
 
         if(args.length == 2) {
             if(args[0].equalsIgnoreCase("generation") || args[0].equalsIgnoreCase("give"))
-                for(GenGeneration generation : this.plugin.dataLoader.getGenerations())
+                for(GenGeneration generation : this.plugin.generationManager.getGenerations())
                     completion.add(generation.getName());
 
             return completion;

@@ -1,7 +1,7 @@
 package net.universestudio.commands;
 
 import net.universestudio.CustomGen;
-import net.universestudio.generators.GenGeneration;
+import net.universestudio.models.GenGeneration;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -33,7 +33,7 @@ public class GenCommand implements CommandExecutor {
             if(args[0].equalsIgnoreCase("give") && args.length > 1) {
 
                 String name = args[1];
-                if(this.plugin.dataLoader.contains(name)) {
+                if(this.plugin.generationManager.contains(name)) {
                     int nb = 1;
                     if(args.length > 2) {
                         try {
@@ -61,7 +61,7 @@ public class GenCommand implements CommandExecutor {
             // List command : gets available generation names
             if( args[0].equalsIgnoreCase("list")) {
                 String genList = "§b§lCustomGen §8- §3Available generator(s) §b✔" + "§r";
-                for(GenGeneration generation : this.plugin.dataLoader.getGenerations()) {
+                for(GenGeneration generation : this.plugin.generationManager.getGenerations()) {
                     genList += "\n §8- §3" + generation.getName() + "§r";
                 }
 
@@ -72,9 +72,9 @@ public class GenCommand implements CommandExecutor {
             // Generation command : gets the generation of the given generation name
             if(args[0].equalsIgnoreCase("generation") && args.length > 1) {
                 String name = args[1];
-                if(this.plugin.dataLoader.contains(name)) {
+                if(this.plugin.generationManager.contains(name)) {
                     String generation = "§b§lCustomGen §8- §3Generation of §b" + name + "§r\n";
-                    Map<Material, Double> map = this.plugin.dataLoader.getGeneration(name).getGeneration();
+                    Map<Material, Double> map = this.plugin.generationManager.getGeneration(name).getGeneration();
                     for(Material key : map.keySet()) {
                         generation += "§8" + key.name() + "→ §7" + map.get(key).doubleValue() + "§6%" + "§r\n";
                     }

@@ -5,7 +5,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import net.universestudio.CustomGen;
-import net.universestudio.generators.GenGeneration;
+import net.universestudio.models.GenGeneration;
 import org.bukkit.Material;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -13,23 +13,22 @@ import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
 
-public class DataLoader {
+public class GenerationManager {
 
     private final JavaPlugin plugin;
     private final String path;
     private final Gson gson;
     private final List<GenGeneration> genGenerations;
 
-    public DataLoader(JavaPlugin plugin) {
+    public GenerationManager(JavaPlugin plugin) {
         this.plugin = plugin;
         this.path = this.plugin.getDataFolder().getPath() + "\\Generators";
         this.gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(GenGeneration.class, new GenGenerationAdapter()).create();
         this.genGenerations = new ArrayList<GenGeneration>();
 
         File dataDir = new File(this.path);
-        if(!dataDir.exists()) {
-            try { dataDir.mkdir(); } catch(Exception e) { e.printStackTrace(); }
-        }
+        if(!dataDir.exists())
+            dataDir.mkdir();
     }
 
     public List<GenGeneration> getGenerations() { return this.genGenerations; }
@@ -125,7 +124,6 @@ public class DataLoader {
                         reader.endObject();
                     }
                     reader.endArray();
-
                     generation.setGeneration(map);
                 }
             }

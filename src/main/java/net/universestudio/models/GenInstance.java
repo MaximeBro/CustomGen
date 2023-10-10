@@ -1,4 +1,4 @@
-package net.universestudio.generators;
+package net.universestudio.models;
 
 import org.bukkit.Location;
 import org.bukkit.World;

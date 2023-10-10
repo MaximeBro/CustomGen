@@ -1,24 +1,13 @@
-package net.universestudio.generators;
+package net.universestudio.models;
 
 import org.bukkit.Material;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 public class GenGeneration {
     private String name;
     private Map<Material, Double> generation;
-
-    public GenGeneration(String name) {
-        this.name = name;
-        this.generation = new HashMap<Material, Double>();
-    }
-
-    public GenGeneration(String name, Map<Material, Double> generation) {
-        this.name = name;
-        this.generation = generation;
-    }
 
     public GenGeneration() {}
 

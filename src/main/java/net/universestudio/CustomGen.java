@@ -1,11 +1,11 @@
 package net.universestudio;
 
 import net.universestudio.commands.CommandManager;
-import net.universestudio.commands.GenCommand;
-import net.universestudio.data.DataLoader;
-import net.universestudio.data.DataSaver;
-import net.universestudio.generators.GenGeneration;
-import net.universestudio.generators.GenInstance;
+import net.universestudio.data.GenerationManager;
+import net.universestudio.data.InstanceManager;
+import net.universestudio.data.RecipeManager;
+import net.universestudio.models.GenGeneration;
+import net.universestudio.models.GenInstance;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Dispenser;
@@ -18,20 +18,21 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class CustomGen extends JavaPlugin {
-
-    public final DataSaver dataSaver;
-    public final DataLoader dataLoader;
+    public final InstanceManager instanceManager;
+    public final GenerationManager generationManager;
+    public final RecipeManager recipeManager;
     public final Map<UUID, BukkitTask> pluginTasks;
     public final ConsoleCommandSender console;
     private int registeredGenerators;
+    private int registeredRecipes;
     private final Map<GenInstance, Location> corruptedData;
 
     public CustomGen() {
-        this.dataSaver = new DataSaver(this);
-        this.dataLoader = new DataLoader(this);
+        this.instanceManager = new InstanceManager(this);
+        this.generationManager = new GenerationManager(this);
+        this.recipeManager = new RecipeManager(this);
         this.pluginTasks = new HashMap<>();
         this.console = this.getServer().getConsoleSender();
         this.corruptedData = new HashMap<>();
@@ -39,17 +40,18 @@ public class CustomGen extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        this.dataSaver.init();
-        this.dataLoader.init();
+        this.instanceManager.init(); // Recover all the saved placed generations in every world
+        this.generationManager.init(); // Recover all defined generations in the "Generators" folder
+        this.recipeManager.init(); // Recover all defined recipes in the "Recipes" folder
         this.retrieveGenerators();
-        this.registerRecipe();
         CommandManager.registerCommands(this);
 
         getServer().getPluginManager().registerEvents(new GenListener(this), this);
 
         console.sendMessage(ChatColor.GREEN + "[CustomGen] Plugin enabled !");
-        console.sendMessage(ChatColor.GREEN + "" + this.dataLoader.getGenerations().size() + " custom generation(s) loaded !");
-        console.sendMessage(ChatColor.GREEN + "" + this.registeredGenerators + " custom task(s) started !");
+        console.sendMessage(ChatColor.GREEN + "" + this.generationManager.getGenerations().size() + " custom generation(s) loaded !");
+        console.sendMessage(ChatColor.GREEN + "" + this.registeredGenerators + " task(s) started !");
+        console.sendMessage(ChatColor.GREEN + "" + this.registeredRecipes + " custom recipe(s) registered !");
     }
 
     @Override
@@ -60,7 +62,7 @@ public class CustomGen extends JavaPlugin {
 
     // Will transform back every registered dispenser as new generators
     private void retrieveGenerators() {
-        for(GenInstance instance : this.dataSaver.getInstances()) {
+        for(GenInstance instance : this.instanceManager.getInstances()) {
             World world = instance.getWorld();
             if(this.getServer().getWorlds().contains(world)) {
                 Block block = world.getBlockAt(instance.getLocation());
@@ -80,19 +82,14 @@ public class CustomGen extends JavaPlugin {
         this.corruptedData.clear();
     }
 
-    public void registerRecipe() {
-        ItemStack generator = new ItemStack(Material.DISPENSER);
-        ItemMeta meta = generator.getItemMeta();
-        meta.setDisplayName(ChatColor.YELLOW + "default");
-        generator.setItemMeta(meta);
-        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "cg_generator"), generator);
-        recipe.shape("%i%", "i*i", "%i%");
+    public void registerRecipe(ShapedRecipe recipe) {
+        if(recipe == null) {
+            this.console.sendMessage("§c[ERROR][REGISTRY] unknown recipe !");
+            return;
+        }
 
-        recipe.setIngredient('%', Material.SMOOTH_STONE);
-        recipe.setIngredient('i', Material.IRON_INGOT);
-        recipe.setIngredient('*', Material.DISPENSER);
-
-        getServer().addRecipe(recipe);
+        this.registeredRecipes++;
+        this.getServer().addRecipe(recipe);
     }
 
     public void registerGenerator(Dispenser genBlock, UUID id) {
@@ -106,8 +103,7 @@ public class CustomGen extends JavaPlugin {
     }
 
     private ItemStack getRandomMaterial(String name) {
-        GenGeneration generation = this.dataLoader.getGeneration(name);
-
+        GenGeneration generation = this.generationManager.getGeneration(name);
         if(generation != null) {
             Map<Material, Double> generations = generation.getGeneration();
             Random random = new Random();
@@ -125,17 +121,7 @@ public class CustomGen extends JavaPlugin {
         return new ItemStack(Material.STONE, 1);
     }
 
-    public <K, V> Map<K, V> sortMap(Map<K, V> map, Comparator comparator) {
-
-        Stream<Map.Entry<K, V>> sorted = map.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue(comparator));
-
-        Map<K, V> sortedMap = sorted.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-        return sortedMap;
-    }
-
-    public static <K, V extends Comparable<? super V>> Map<K, V> sortMap(Map<K, V> map) {
+    public <K, V extends Comparable<? super V>> Map<K, V> sortMap(Map<K, V> map) {
         return map.entrySet()
                 .stream()
                 .sorted(Map.Entry.<K, V>comparingByValue().reversed())
@@ -144,6 +130,6 @@ public class CustomGen extends JavaPlugin {
 
     private void removeGen(GenInstance instance, Location location) {
         console.sendMessage( ChatColor.RED + "[CustomGen] block " + location + " corrupted or got the wrong data. Pending deletion...");
-        this.dataSaver.removeLocation(instance);
+        this.instanceManager.removeLocation(instance);
     }
 }
